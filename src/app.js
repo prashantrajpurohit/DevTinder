@@ -1,15 +1,44 @@
 const express = require("express");
 const connectDb = require("./config/database");
+const bcrypt = require("bcrypt");
 const User = require("./model/user");
+const { validateSignUpData } = require("./utils/validation");
 const app = express();
 app.use(express.json());
 app.post("/signup", async (req, res, next) => {
-  const data = new User(req.body);
+  //read bcrypt docs
+  const { firstName, lastName, password, email } = req.body;
+  const passwordHash = await bcrypt.hash(password, 10);
+  const data = new User({
+    firstName,
+    lastName,
+    email,
+    password: passwordHash,
+  });
+
   try {
+    validateSignUpData(req);
     await data.save();
     res.send("Data added succ");
   } catch (err) {
-    res.status(400).send("Something bad happened");
+    res.status(400).send("ERROR : " + err);
+  }
+});
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      throw new Error("invalid credential");
+    }
+    const isPasswordMatched = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatched) {
+      throw new Error("invalid credential");
+    } else {
+      res.send("Login successful");
+    }
+  } catch (err) {
+    res.status(400).send("ERROR :" + err);
   }
 });
 //finding user by email
@@ -68,11 +97,21 @@ app.delete("/user/delete/:id", async (req, res) => {
 //find the diff btw PATCH and PUT
 app.patch("/user/edit/:id", async (req, res) => {
   try {
+    const ALLOWED_UPDATES = ["photo", "age", "gender", "firstName"];
+    const isUpdateAllowed = Object.keys(req.body).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Can not update this");
+    }
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       returnDocument: "after", //this will return updated document by default it will return old doc
+      runValidators: true,
     });
     res.send(user);
-  } catch (err) {}
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
 });
 app.put("/user/edit/", async (req, res) => {
   try {
