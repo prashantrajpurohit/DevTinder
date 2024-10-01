@@ -1,7 +1,6 @@
 const express = require("express");
 const connectDb = require("./config/database");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const User = require("./model/user");
 
 const { validateSignUpData } = require("./utils/validation");
@@ -37,12 +36,11 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("invalid credential");
     }
-    const isPasswordMatched = await bcrypt.compare(password, user.password);
+    const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
       throw new Error("invalid credential");
     } else {
-      const token = await jwt.sign({ _id: user._id }, "perry@!23");
-
+      const token = await user.getJWT();
       res.cookie("token", token);
       res.send("Login successful");
     }
