@@ -9,5 +9,14 @@ const validateSignUpData = (req) => {
     throw new Error("password is not valid!!!");
   }
 };
+const validateEditData = (req) => {
+  const allowedFieldsForEdit = ["firstName", "lastName", "skills"];
+  const isAllowed = Object.keys(req.body).every((field) =>
+    allowedFieldsForEdit.includes(field)
+  );
+  if (!isAllowed) {
+    throw new Error("invalid edit request");
+  }
+};
 
-module.exports = { validateSignUpData };
+module.exports = { validateSignUpData, validateEditData };
