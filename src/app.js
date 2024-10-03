@@ -6,10 +6,12 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const authrouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 app.use(express.json());
 app.use(cookieParser());
 app.use("/", authrouter);
 app.use("/", profileRouter);
+app.use("/", requestRouter);
 
 connectDb()
   .then(() => {

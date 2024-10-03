@@ -34,12 +34,17 @@ const userSchema = mongoose.Schema(
     },
     gender: {
       type: String,
-      //validators by default work for new user means POST api to make then work on PUT/PATCH api we use runvalidator in options
-      validate(value) {
-        if (!["male", "female", "others"].includes(value)) {
-          throw new Error("Gneder is no valid");
-        }
+      enum: {
+        values: ["male", "female", "other"],
+        message: `{VALUE} is not a valid gender`,
       },
+
+      //validators by default work for new user means POST api to make then work on PUT/PATCH api we use runvalidator in options
+      // validate(value) {
+      //   if (!["male", "female", "others"].includes(value)) {
+      //     throw new Error("Gneder is no valid");
+      //   }
+      // },
     },
     photo: {
       type: String,
