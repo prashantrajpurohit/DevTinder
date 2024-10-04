@@ -1,4 +1,5 @@
 const { userAuth } = require("../middlewares/auth");
+const user = require("../model/user");
 const ConnectionRequest = require("../model/userconnectionreq");
 const express = require("express");
 const userRouter = express.Router();
@@ -40,4 +41,31 @@ userRouter.get("/user/connection", userAuth, async (req, res) => {
     res.status(400).send("Error :" + err.message);
   }
 });
+userRouter.get("/feed", userAuth, async (req, res) => {
+  try {
+    const loggedinUser = req.user._id;
+    const connectionrequest = await ConnectionRequest.find({
+      $or: [{ fromUserId: loggedinUser }, { toUserId: loggedinUser }],
+    }).select("fromUserId toUserId");
+
+    const hiddenfromfeed = new Set();
+    connectionrequest.forEach((item) => {
+      hiddenfromfeed.add(item.fromUserId.toString());
+      hiddenfromfeed.add(item.toUserId.toString());
+    });
+    const newArr = [...hiddenfromfeed];
+    // const allUser = await user.find({}).select("_id");
+    // const freshUser = allUser.filter(
+    //   (item) => !newArr.includes(item.toString())
+    // );
+    const allUser = await user.find({
+      $and: [{ _id: { $nin: newArr } }, { _id: { $ne: loggedinUser } }],
+    });
+    console.log(allUser);
+    res.json(newArr);
+  } catch (err) {
+    res.status(400).send("Error : " + err.message);
+  }
+});
+
 module.exports = userRouter;
