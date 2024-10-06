@@ -18,6 +18,6 @@ profileRouter.get("/profile", userAuth, async (req, res) => {
   console.log(req.user);
 
   const { user } = req;
-  res.send(user);
+  res.json({ data: user });
 });
 module.exports = profileRouter;

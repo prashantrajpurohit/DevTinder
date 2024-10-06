@@ -32,11 +32,11 @@ authrouter.post("/login", async (req, res) => {
     }
     const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
-      throw new Error("invalid credential");
+      res.status(401).json({ message: "Invalid Credential" });
     } else {
       const token = await user.getJWT();
       res.cookie("token", token);
-      res.send("Login successful");
+      res.json({ message: "Login successful", data: user });
     }
   } catch (err) {
     res.status(400).send("ERROR :" + err);

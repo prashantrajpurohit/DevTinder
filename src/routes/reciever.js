@@ -43,6 +43,8 @@ userRouter.get("/user/connection", userAuth, async (req, res) => {
 });
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
+    const page = +req.query.page;
+    const limit = +req.query.limit > 10 ? 10 : req.query.limit;
     const loggedinUser = req.user._id;
     const connectionrequest = await ConnectionRequest.find({
       $or: [{ fromUserId: loggedinUser }, { toUserId: loggedinUser }],
@@ -54,14 +56,14 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       hiddenfromfeed.add(item.toUserId.toString());
     });
     const newArr = [...hiddenfromfeed];
-    // const allUser = await user.find({}).select("_id");
-    // const freshUser = allUser.filter(
-    //   (item) => !newArr.includes(item.toString())
-    // );
-    const allUser = await user.find({
-      $and: [{ _id: { $nin: newArr } }, { _id: { $ne: loggedinUser } }],
-    });
-    console.log(allUser);
+
+    const allUser = await user
+      .find({
+        $and: [{ _id: { $nin: newArr } }, { _id: { $ne: loggedinUser } }],
+      })
+      .select(toExtractFormRef)
+      .skip((page - 1) * limit)
+      .limit(limit);
     res.json(newArr);
   } catch (err) {
     res.status(400).send("Error : " + err.message);
